@@ -79,14 +79,17 @@ public class NotificationUtil {
             NotificationManager notificationManager = (NotificationManager) context
                     .getSystemService(Context.NOTIFICATION_SERVICE);
             // 定义Notification的各种属性
-            Notification notification = new Notification(icon, ticker, System.currentTimeMillis());
+            Notification notification = new Notification.Builder(context, "channel_seed")
+                    .setSmallIcon(icon)
+                    .setTicker(ticker)
+                    .setWhen( System.currentTimeMillis())
+                    .setPriority(Notification.PRIORITY_DEFAULT)
+                    .build();
             notification.flags |= Notification.FLAG_ONGOING_EVENT | Notification.FLAG_SHOW_LIGHTS;
             notification.defaults = Notification.DEFAULT_ALL;
             notification.ledARGB = Color.GREEN;
             notification.ledOnMS = 5000; //闪光时间，毫秒
-
             notification.tickerText = ticker;
-            notification.setLatestEventInfo(context, title, msg, pendingIntent);
             // 把Notification传递给NotificationManager
             notificationManager.notify(id, notification);
         }
