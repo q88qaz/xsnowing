@@ -1,10 +1,13 @@
 package com.vise.utils.view;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.content.res.TypedArray;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.view.MotionEvent;
@@ -16,6 +19,8 @@ import android.widget.EditText;
 
 import com.vise.log.ViseLog;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.List;
 
 /**
@@ -224,5 +229,78 @@ public class ActivityUtil {
     public static void adjustSoftInput(Activity activity) {
         activity.getWindow().setSoftInputMode(
                 WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+    }
+
+    // 以下解决Android 8.0透明Activity指定屏幕方向崩溃问题
+    private static int isOreo = 0;
+    private static final int VERSION_OREO = Build.VERSION_CODES.O;
+
+    /**
+     * java.lang.IllegalStateException: Only fullscreen opaque activities can request orientation
+     * <p>
+     * 修复android 8.0存在的问题
+     * <p>
+     * 在Activity中onCreate()中super之前调用
+     *
+     * @param activity
+     */
+    public static void lookOrientation(Activity activity) {
+        //目标版本8.0及其以上
+        if (isOreo == 0) {
+            if (activity.getApplicationInfo().targetSdkVersion == VERSION_OREO
+                    || Build.VERSION.SDK_INT == VERSION_OREO) {
+                isOreo = 1;
+            } else {
+                isOreo = 2;
+            }
+        }
+        if (isOreo == 1 && isTranslucentOrFloating(activity)) {
+            fixOrientation(activity);
+        }
+    }
+
+    /**
+     * 设置屏幕不固定，绕过检查
+     *
+     * @param activity
+     */
+    private static void fixOrientation(Activity activity) {
+        try {
+            Class<Activity> activityClass = Activity.class;
+            Field mActivityInfoField = activityClass.getDeclaredField("mActivityInfo");
+            mActivityInfoField.setAccessible(true);
+            ActivityInfo activityInfo = (ActivityInfo) mActivityInfoField.get(activity);
+            //设置屏幕不固定
+            activityInfo.screenOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 检查屏幕 横竖屏或者锁定就是固定
+     *
+     * @param activity
+     * @return
+     */
+    @SuppressLint("SoonBlockedPrivateApi")
+    private static boolean isTranslucentOrFloating(Activity activity) {
+        boolean isTranslucentOrFloating = false;
+        try {
+            Class<?> styleableClass = Class.forName("com.android.internal.R$styleable");
+            Field WindowField = styleableClass.getDeclaredField("Window");
+            WindowField.setAccessible(true);
+            int[] styleableRes = (int[]) WindowField.get(null);
+            //先获取到TypedArray
+            final TypedArray typedArray = activity.obtainStyledAttributes(styleableRes);
+            Class<?> ActivityInfoClass = ActivityInfo.class;
+            //调用检查是否屏幕旋转
+            Method isTranslucentOrFloatingMethod = ActivityInfoClass.getDeclaredMethod("isTranslucentOrFloating", TypedArray.class);
+            isTranslucentOrFloatingMethod.setAccessible(true);
+            isTranslucentOrFloating = (boolean) isTranslucentOrFloatingMethod.invoke(null, typedArray);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return isTranslucentOrFloating;
     }
 }

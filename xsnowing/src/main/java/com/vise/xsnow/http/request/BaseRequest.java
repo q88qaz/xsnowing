@@ -274,7 +274,12 @@ public abstract class BaseRequest<R extends BaseRequest> {
                 newRetrofitBuilder.addConverterFactory(httpGlobalConfig.getConverterFactory());
             }
             if (httpGlobalConfig.getCallAdapterFactory() != null) {
-                newRetrofitBuilder.addCallAdapterFactory(httpGlobalConfig.getCallAdapterFactory());
+                try {
+                    // ArrayList 可能发生 java.lang.ArrayIndexOutOfBoundsException
+                    newRetrofitBuilder.addCallAdapterFactory(httpGlobalConfig.getCallAdapterFactory());
+                } catch (Throwable e) {
+                    e.printStackTrace();
+                }
             }
             if (httpGlobalConfig.getCallFactory() != null) {
                 newRetrofitBuilder.callFactory(httpGlobalConfig.getCallFactory());
@@ -307,7 +312,12 @@ public abstract class BaseRequest<R extends BaseRequest> {
         if (httpGlobalConfig.getCallAdapterFactory() == null) {
             httpGlobalConfig.callAdapterFactory(RxJava2CallAdapterFactory.create());
         }
-        ViseHttp.getRetrofitBuilder().addCallAdapterFactory(httpGlobalConfig.getCallAdapterFactory());
+        try {
+            // ArrayList 可能发生 java.lang.ArrayIndexOutOfBoundsException
+            ViseHttp.getRetrofitBuilder().addCallAdapterFactory(httpGlobalConfig.getCallAdapterFactory());
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
 
         if (httpGlobalConfig.getCallFactory() != null) {
             ViseHttp.getRetrofitBuilder().callFactory(httpGlobalConfig.getCallFactory());
