@@ -233,7 +233,6 @@ public class ActivityUtil {
 
     // 以下解决Android 8.0透明Activity指定屏幕方向崩溃问题
     private static int isOreo = 0;
-    private static final int VERSION_OREO = Build.VERSION_CODES.O;
 
     /**
      * java.lang.IllegalStateException: Only fullscreen opaque activities can request orientation
@@ -247,8 +246,7 @@ public class ActivityUtil {
     public static void lookOrientation(Activity activity) {
         //目标版本8.0及其以上
         if (isOreo == 0) {
-            if (activity.getApplicationInfo().targetSdkVersion == VERSION_OREO
-                    || Build.VERSION.SDK_INT == VERSION_OREO) {
+            if (Build.VERSION.SDK_INT == Build.VERSION_CODES.O) {
                 isOreo = 1;
             } else {
                 isOreo = 2;
