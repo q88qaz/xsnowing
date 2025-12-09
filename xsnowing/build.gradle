@@ -3,7 +3,7 @@ apply plugin: 'com.github.dcendents.android-maven'
 group = 'com.xseed.xsnowing'
 android {
     compileSdkVersion 30
-    buildToolsVersion "30.0.2"
+    buildToolsVersion "30.0.3"
 
     defaultConfig {
         minSdkVersion 23
@@ -20,9 +20,20 @@ android {
     lintOptions {
         abortOnError false
     }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+}
+
+repositories {
+    flatDir {
+        dirs 'libs' //this way we can find the .aar file in libs folder
+    }
 }
 
 dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
     /**
      * 以下为必须依赖包：
      * 第一个是注解框架

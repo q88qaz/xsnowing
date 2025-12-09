@@ -25,3 +25,6 @@
 -renamesourcefileattribute ProGuard
 -keepattributes SourceFile,LineNumberTable
 
+-dontwarn org.jsoup.**
+-keep class org.jsoup.**{*;}
+-keeppackagenames org.jsoup.nodes
