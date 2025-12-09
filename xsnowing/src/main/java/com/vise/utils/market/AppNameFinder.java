@@ -29,7 +29,7 @@ public class AppNameFinder {
         if (map.containsKey(pkg)) {
             Bean b = map.get(pkg);
             if (null != b) {
-                cb.onSuccess(b.appName, b.appIcon);
+                callNameNoDesc(b, cb);
             } else {
                 cb.onFail();
             }
@@ -119,7 +119,7 @@ public class AppNameFinder {
             MAIN_HANDLER.post(new Runnable() {
                 @Override
                 public void run() {
-                    mCallback.onSuccess(b.appName, b.appIcon);
+                    callNameNoDesc(b, mCallback);
                     mCallback = null;
                 }
             });
@@ -167,5 +167,27 @@ public class AppNameFinder {
         public void setAppIcon(String appIcon) {
             this.appIcon = appIcon;
         }
+    }
+
+    private static void callNameNoDesc(Bean b, Callback cb) {
+        String s = b.appName;
+        String k = "";
+        if (s.contains(" - ")) {
+            k = " - ";
+        } else if (s.contains("-")) {
+            k = "-";
+        } else if (s.contains(" — ")) {
+            k = " — ";
+        } else if (s.contains("—")) {
+            k = "—";
+        }
+        if (!TextUtils.isEmpty(k)) {
+            String[] ag = s.split(k);
+            if (ag.length > 0 && !TextUtils.isEmpty(ag[0])) {
+                cb.onSuccess(ag[0], b.appIcon);
+                return;
+            }
+        }
+        cb.onSuccess(s, b.appIcon);
     }
 }
