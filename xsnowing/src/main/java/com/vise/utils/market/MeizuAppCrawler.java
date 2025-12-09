@@ -37,7 +37,7 @@ public class MeizuAppCrawler {
     private static final Handler MAIN_HANDLER = new Handler(Looper.getMainLooper());
 
     // 回调接口
-    public interface OnAppNameCallback {
+    protected interface OnAppNameCallback {
         void onSuccess(String appName, String iconUrl);
 
         void onFail(String errorMsg);

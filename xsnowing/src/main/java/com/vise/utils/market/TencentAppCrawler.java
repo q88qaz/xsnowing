@@ -23,7 +23,7 @@ public class TencentAppCrawler {
             .build();
 
     // 回调接口
-    public interface OnAppNameCallback {
+    protected interface OnAppNameCallback {
         void onSuccess(String appName, String iconUrl);
 
         void onFail(String errorMsg);
