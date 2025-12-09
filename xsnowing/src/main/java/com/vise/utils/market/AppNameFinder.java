@@ -6,6 +6,7 @@ import android.text.TextUtils;
 import android.util.ArrayMap;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -16,20 +17,45 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class AppNameFinder {
 
     private static final int NUM = 3;
-    private static final List<Bean> list = Collections.synchronizedList(new ArrayList<>());
-    private static final Map<String, Bean> map = Collections.synchronizedMap(new ArrayMap<>());
+    private static final List<MarBean> list = Collections.synchronizedList(new ArrayList<>());
+    private static final Map<String, MarBean> map = Collections.synchronizedMap(new ArrayMap<>());
     // 主线程Handler，用于UI线程回调
     private static final Handler MAIN_HANDLER = new Handler(Looper.getMainLooper());
     private static String pg = "";
     private static Callback mCallback;
     private static AtomicInteger counter;
     private static ExecutorService executor;
+    // 多包名查询
+    private static MultCallback multCallback;
+    private static boolean isHighQuality = false;
+    private static final Map<String, MarBean> beanMap = Collections.synchronizedMap(new ArrayMap<>());
+    private static final List<String> seekList = Collections.synchronizedList(new ArrayList<>());
 
-    public static void searchAppName(String pkg, final Callback cb) {
+    public static void setHighQuality(boolean b) {
+        if (b == isHighQuality) {
+            return;
+        }
+        isHighQuality = b;
+        try {
+            list.clear();
+            map.clear();
+            beanMap.clear();
+            seekList.clear();
+        } catch (Throwable t) {
+
+        }
+    }
+
+    public static void searchApp(String s, final Callback cb) {
+        if (isNoStr(s)) {
+            cb.onFail();
+            return;
+        }
+        final String pkg = s.trim();
         if (map.containsKey(pkg)) {
-            Bean b = map.get(pkg);
+            MarBean b = map.get(pkg);
             if (null != b) {
-                callNameNoDesc(b, cb);
+                cb.onSuccess(b.appName, b.appIcon);
             } else {
                 cb.onFail();
             }
@@ -47,14 +73,18 @@ public class AppNameFinder {
             XiaomiAppCrawler.getAppNameAsync(pkg, new XiaomiAppCrawler.OnAppNameCallback() {
                 @Override
                 public void onSuccess(String appName, String iconUrl) {
-                    Bean b = new Bean();
+                    MarBean b = new MarBean();
                     if (!TextUtils.isEmpty(appName)) {
                         b.setAppName(appName);
                     }
                     if (!TextUtils.isEmpty(iconUrl)) {
                         b.setAppIcon(iconUrl);
                     }
-                    list.add(0, b);
+                    if (isHighQuality) {
+                        list.add(b);
+                    } else {
+                        list.add(0, b);
+                    }
                     workIt();
                 }
 
@@ -68,14 +98,18 @@ public class AppNameFinder {
             MeizuAppCrawler.getAppNameAsync(pkg, new MeizuAppCrawler.OnAppNameCallback() {
                 @Override
                 public void onSuccess(String appName, String iconUrl) {
-                    Bean b = new Bean();
+                    MarBean b = new MarBean();
                     if (!TextUtils.isEmpty(appName)) {
                         b.setAppName(appName);
                     }
                     if (!TextUtils.isEmpty(iconUrl)) {
                         b.setAppIcon(iconUrl);
                     }
-                    list.add(b);
+                    if (isHighQuality) {
+                        list.add(0, b);
+                    } else {
+                        list.add(b);
+                    }
                     workIt();
                 }
 
@@ -89,14 +123,18 @@ public class AppNameFinder {
             TencentAppCrawler.fetchAppNameFromPackage(pkg, new TencentAppCrawler.OnAppNameCallback() {
                 @Override
                 public void onSuccess(String appName, String iconUrl) {
-                    Bean b = new Bean();
+                    MarBean b = new MarBean();
                     if (!TextUtils.isEmpty(appName)) {
                         b.setAppName(appName);
                     }
                     if (!TextUtils.isEmpty(iconUrl)) {
                         b.setAppIcon(iconUrl);
                     }
-                    list.add(b);
+                    if (isHighQuality) {
+                        list.add(0, b);
+                    } else {
+                        list.add(b);
+                    }
                     workIt();
                 }
 
@@ -108,10 +146,145 @@ public class AppNameFinder {
         });
     }
 
+    public static void searchApp(String[] args, final MultCallback cb) {
+        List<String> list = new ArrayList<>();
+        list.addAll(Arrays.asList(args));
+        searchApp(list, cb);
+    }
+
+    public static void searchApp(List<String> list, final MultCallback cb) {
+        if (null == list || list.isEmpty()) {
+            cb.onFail();
+            return;
+        }
+        if (null != multCallback) {
+            return;
+        }
+        multCallback = cb;
+        beanMap.clear();
+        seekList.clear();
+        for (int i = 0; i < list.size(); i++) {
+            String str = list.get(i);
+            if (isNoStr(str)) {
+                continue;
+            }
+            final String s = str.trim();
+            if (map.containsKey(s)) {
+                MarBean b = map.get(s);
+                if (null == b) {
+                    b = new MarBean();
+                }
+                b.setPkg(s);
+                beanMap.put(s, b);
+            } else {
+                seekList.add(s);
+            }
+        }
+        if (list.size() == beanMap.size()) {
+            multCallback.onSuccess(beanMap);
+            multCallback = null;
+            return;
+        }
+
+        final int size = seekList.size() * NUM;
+        if (size == 0) {
+            if (beanMap.isEmpty()) {
+                multCallback.onFail();
+            } else {
+                multCallback.onSuccess(beanMap);
+            }
+            multCallback = null;
+            return;
+        }
+        counter = new AtomicInteger(size);
+        executor = Executors.newFixedThreadPool(size);
+        for (int i = 0; i < seekList.size(); i++) {
+            final String pkg = seekList.get(i);
+            executor.execute(() -> {
+                XiaomiAppCrawler.getAppNameAsync(pkg, new XiaomiAppCrawler.OnAppNameCallback() {
+                    @Override
+                    public void onSuccess(String appName, String iconUrl) {
+                        MarBean b = new MarBean();
+                        if (!TextUtils.isEmpty(appName)) {
+                            b.setAppName(appName);
+                        }
+                        if (!TextUtils.isEmpty(iconUrl)) {
+                            b.setAppIcon(iconUrl);
+                        }
+                        if (isHighQuality) {
+                            if (!map.containsKey(pkg)) {
+                                map.put(pkg, b);
+                            }
+                        } else {
+                            map.put(pkg, b);
+                        }
+                        workEt();
+                    }
+
+                    @Override
+                    public void onFail(String errorMsg) {
+                        workEt();
+                    }
+                });
+            });
+            executor.execute(() -> {
+                MeizuAppCrawler.getAppNameAsync(pkg, new MeizuAppCrawler.OnAppNameCallback() {
+                    @Override
+                    public void onSuccess(String appName, String iconUrl) {
+                        MarBean b = new MarBean();
+                        if (!TextUtils.isEmpty(appName)) {
+                            b.setAppName(appName);
+                        }
+                        if (!TextUtils.isEmpty(iconUrl)) {
+                            b.setAppIcon(iconUrl);
+                        }
+                        if (isHighQuality) {
+                            map.put(pkg, b);
+                        } else if (!map.containsKey(pkg)) {
+                            map.put(pkg, b);
+                        }
+                        workEt();
+                    }
+
+                    @Override
+                    public void onFail(String errorMsg) {
+                        workEt();
+                    }
+                });
+            });
+            executor.execute(() -> {
+                TencentAppCrawler.fetchAppNameFromPackage(pkg, new TencentAppCrawler.OnAppNameCallback() {
+                    @Override
+                    public void onSuccess(String appName, String iconUrl) {
+                        MarBean b = new MarBean();
+                        if (!TextUtils.isEmpty(appName)) {
+                            b.setAppName(appName);
+                        }
+                        if (!TextUtils.isEmpty(iconUrl)) {
+                            b.setAppIcon(iconUrl);
+                        }
+                        if (isHighQuality) {
+                            map.put(pkg, b);
+                        } else if (!map.containsKey(pkg)) {
+                            map.put(pkg, b);
+                        }
+                        workEt();
+                    }
+
+                    @Override
+                    public void onFail(String errorMsg) {
+                        workEt();
+                    }
+                });
+            });
+        }
+
+    }
+
     private static void workIt() {
         if (counter.decrementAndGet() > 0) return;
         for (int i = 0; i < list.size(); i++) {
-            final Bean b = list.get(i);
+            final MarBean b = list.get(i);
             if (null == b || TextUtils.isEmpty(b.appName)) continue;
             if (!TextUtils.isEmpty(pg)) {
                 map.put(pg, b);
@@ -119,7 +292,7 @@ public class AppNameFinder {
             MAIN_HANDLER.post(new Runnable() {
                 @Override
                 public void run() {
-                    callNameNoDesc(b, mCallback);
+                    mCallback.onSuccess(b.appName, b.appIcon);
                     mCallback = null;
                 }
             });
@@ -137,57 +310,48 @@ public class AppNameFinder {
         });
     }
 
+    private static void workEt() {
+        if (counter.decrementAndGet() > 0) return;
+        for (int i = 0; i < seekList.size(); i++) {
+            String s = seekList.get(i);
+            MarBean b = null;
+            if (map.containsKey(s)) {
+                b = map.get(s);
+            }
+            if (null == b) {
+                map.put(s, null);
+                b = new MarBean();
+            }
+            b.setPkg(s);
+            beanMap.put(s, b);
+        }
+        if (beanMap.isEmpty()) {
+            if (null != multCallback) {
+                multCallback.onFail();
+                multCallback = null;
+            }
+            return;
+        }
+        if (null != multCallback) {
+            multCallback.onSuccess(beanMap);
+            multCallback = null;
+        }
+    }
+
     public interface Callback {
         void onSuccess(String appName, String appIcon);
 
         void onFail();
     }
 
-    public static class Bean {
-        String appName;
-        String appIcon;
+    public interface MultCallback {
+        void onSuccess(Map<String, MarBean> map);
 
-        public Bean() {
-            this.appName = "";
-            this.appIcon = "";
-        }
-
-        public String getAppName() {
-            return appName;
-        }
-
-        public void setAppName(String appName) {
-            this.appName = appName;
-        }
-
-        public String getAppIcon() {
-            return appIcon;
-        }
-
-        public void setAppIcon(String appIcon) {
-            this.appIcon = appIcon;
-        }
+        void onFail();
     }
 
-    private static void callNameNoDesc(Bean b, Callback cb) {
-        String s = b.appName;
-        String k = "";
-        if (s.contains(" - ")) {
-            k = " - ";
-        } else if (s.contains("-")) {
-            k = "-";
-        } else if (s.contains(" — ")) {
-            k = " — ";
-        } else if (s.contains("—")) {
-            k = "—";
-        }
-        if (!TextUtils.isEmpty(k)) {
-            String[] ag = s.split(k);
-            if (ag.length > 0 && !TextUtils.isEmpty(ag[0])) {
-                cb.onSuccess(ag[0], b.appIcon);
-                return;
-            }
-        }
-        cb.onSuccess(s, b.appIcon);
+    private static boolean isNoStr(String s) {
+        return TextUtils.isEmpty(s) || TextUtils.isEmpty(s.trim());
     }
+
 }
