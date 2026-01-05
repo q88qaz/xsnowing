@@ -233,47 +233,47 @@ public class CalendarManager {
                 return;
             }
         }
-        if (isExistTitle(ac, title) || isExistDescription(ac, description)) {
-            if (null != cb) {
-                cb.onSuccess();
-                return;
-            }
-        }
         CalendarEvent calendarEvent = new CalendarEvent(
                 title,
                 description,
                 null,
                 getDayHourTimeInMillis(startHour),
                 getDayHourTimeInMillis(endHour),
-                0, isForever ? RRuleConstant.REPEAT_CYCLE_DAILY_FOREVER : null
+                -2, isForever ? RRuleConstant.REPEAT_CYCLE_DAILY_FOREVER : null
         );
-        mActivity = ac;
-        mCalendarEvent = calendarEvent;
-        mCallback = cb;
         if (ContextCompat.checkSelfPermission(ac, Manifest.permission.WRITE_CALENDAR) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(ac,
                     new String[]{Manifest.permission.WRITE_CALENDAR, Manifest.permission.READ_CALENDAR},
                     REQUEST_CALENDAR_PERMISSION);
+            mActivity = ac;
+            mCalendarEvent = calendarEvent;
+            mCallback = cb;
             return;
+        }
+        if (isExistTitle(ac, title) || isExistDescription(ac, description)) {
+            if (null != cb) {
+                cb.onSuccess();
+                return;
+            }
         }
         // 添加事件
         int result = CalendarManager.addCalendarEvent(ac, calendarEvent);
         if (result == 0) {
+            // Toast.makeText(ac, "插入成功", Toast.LENGTH_SHORT).show();
             if (null != cb) {
                 cb.onSuccess();
             }
         } else if (result == -1) {
+            // Toast.makeText(ac, "插入失败", Toast.LENGTH_SHORT).show();
             if (null != cb) {
                 cb.onFail("Add Fail!");
             }
         } else if (result == -2) {
+            // Toast.makeText(ac, "没有权限", Toast.LENGTH_SHORT).show();
             if (null != cb) {
                 cb.onFail("No Permission!");
             }
         }
-        mActivity = null;
-        mCalendarEvent = null;
-        mCallback = null;
     }
 
     /**
