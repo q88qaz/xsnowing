@@ -31,7 +31,7 @@ import java.util.TimeZone;
  * @see RRuleConstant
  * @see CalendarEvent
  */
-public class CalendarManager {
+public class CalendarEventManager {
 
     private static StringBuilder builder = new StringBuilder();
     /**
@@ -213,19 +213,19 @@ public class CalendarManager {
     /**
      * 添加日历事件
      */
-    public static void addCalendarEvent(String title, String description, int startHour, int endHour, boolean isForever, Callback cb) {
+    public static void addCalendarEvent(String title, String description, int startHour, int endHour, Callback cb) {
         Activity ac = CalendarUtil.getTopAc();
         if (null == ac) {
             cb.onFail("Top Ac not found!");
             return;
         }
-        addCalendarEvent(ac, title, description, startHour, endHour, isForever, cb);
+        addCalendarEvent(ac, title, description, startHour, endHour, cb);
     }
 
     /**
      * 添加日历事件2
      */
-    public static void addCalendarEvent(Activity ac, String title, String description, int startHour, int endHour, boolean isForever, Callback cb) {
+    public static void addCalendarEvent(Activity ac, String title, String description, int startHour, int endHour, Callback cb) {
         if (null == ac) {
             ac = CalendarUtil.getTopAc();
             if (null == ac) {
@@ -239,7 +239,7 @@ public class CalendarManager {
                 null,
                 getDayHourTimeInMillis(startHour),
                 getDayHourTimeInMillis(endHour),
-                -2, isForever ? RRuleConstant.REPEAT_CYCLE_DAILY_FOREVER : null
+                -2, RRuleConstant.REPEAT_CYCLE_DAILY_FOREVER
         );
         if (ContextCompat.checkSelfPermission(ac, Manifest.permission.WRITE_CALENDAR) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(ac,
@@ -257,7 +257,7 @@ public class CalendarManager {
             }
         }
         // 添加事件
-        int result = CalendarManager.addCalendarEvent(ac, calendarEvent);
+        int result = CalendarEventManager.addCalendarEvent(ac, calendarEvent);
         if (result == 0) {
             // Toast.makeText(ac, "插入成功", Toast.LENGTH_SHORT).show();
             if (null != cb) {
@@ -283,7 +283,7 @@ public class CalendarManager {
         if (null == mActivity || null == mCallback || null == mCalendarEvent) return;
         if (ContextCompat.checkSelfPermission(mActivity, Manifest.permission.WRITE_CALENDAR) != PackageManager.PERMISSION_GRANTED)
             return;
-        int result = CalendarManager.addCalendarEvent(mActivity, mCalendarEvent);
+        int result = CalendarEventManager.addCalendarEvent(mActivity, mCalendarEvent);
         if (result == 0) {
             if (null != mCallback) {
                 mCallback.onSuccess();
@@ -317,8 +317,8 @@ public class CalendarManager {
      */
     public static boolean isExistTitle(Context context, String title) {
         if (TextUtils.isEmpty(title) || TextUtils.isEmpty(title.trim())) return false;
-        long calID4 = CalendarManager.obtainCalendarAccountID(context);
-        List<CalendarEvent> events4 = CalendarManager.queryAccountEvent(context, calID4);
+        long calID4 = CalendarEventManager.obtainCalendarAccountID(context);
+        List<CalendarEvent> events4 = CalendarEventManager.queryAccountEvent(context, calID4);
         if (null != events4 && !events4.isEmpty()) {
             for (CalendarEvent event : events4) {
                 if (!TextUtils.isEmpty(event.getTitle()) && event.getTitle().contains(title)) {
@@ -335,8 +335,8 @@ public class CalendarManager {
      */
     public static boolean isExistDescription(Context context, String desc) {
         if (TextUtils.isEmpty(desc) || TextUtils.isEmpty(desc.trim())) return false;
-        long calID4 = CalendarManager.obtainCalendarAccountID(context);
-        List<CalendarEvent> events4 = CalendarManager.queryAccountEvent(context, calID4);
+        long calID4 = CalendarEventManager.obtainCalendarAccountID(context);
+        List<CalendarEvent> events4 = CalendarEventManager.queryAccountEvent(context, calID4);
         if (null != events4 && !events4.isEmpty()) {
             for (CalendarEvent event : events4) {
                 if (!TextUtils.isEmpty(event.getDescription()) && event.getDescription().contains(desc)) {

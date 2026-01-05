@@ -41,7 +41,6 @@ dependencies {
      * 后续几个为该库的基础依赖，该库是基于 RxJava 和 Retrofit 实现的
      */
     implementation 'com.android.support:support-annotations:25.0.1'
-    implementation 'androidx.core:core:1.10.0'
     implementation 'com.squareup.okhttp3:okhttp:4.8.1'
     implementation "org.reactivestreams:reactive-streams:1.0.2"
     implementation 'io.reactivex.rxjava2:rxandroid:2.0.1'
