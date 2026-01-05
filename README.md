@@ -3,6 +3,7 @@ xsnowing is a library of xsnow plus with support androidx and okhtt3-v4.8.1
 使用方式:
 <br>
 implementation 'com.github.q88qaz:xsnowing:1.1.2'
+[![](https://jitpack.io/v/q88qaz/xsnowing.svg)](https://jitpack.io/#q88qaz/xsnowing)
 
 ## 2025-12-30
 ## 加入View动画
