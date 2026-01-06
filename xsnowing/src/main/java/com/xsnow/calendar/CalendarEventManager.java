@@ -14,9 +14,6 @@ import android.os.Build;
 import android.provider.CalendarContract;
 import android.text.TextUtils;
 
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -241,9 +238,8 @@ public class CalendarEventManager {
                 getDayHourTimeInMillis(endHour),
                 -2, RRuleConstant.REPEAT_CYCLE_DAILY_FOREVER
         );
-        if (ContextCompat.checkSelfPermission(ac, Manifest.permission.WRITE_CALENDAR) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(ac,
-                    new String[]{Manifest.permission.WRITE_CALENDAR, Manifest.permission.READ_CALENDAR},
+        if (ac.checkSelfPermission(Manifest.permission.WRITE_CALENDAR) != PackageManager.PERMISSION_GRANTED) {
+            ac.requestPermissions(new String[]{Manifest.permission.WRITE_CALENDAR, Manifest.permission.READ_CALENDAR},
                     REQUEST_CALENDAR_PERMISSION);
             mActivity = ac;
             mCalendarEvent = calendarEvent;
@@ -281,7 +277,7 @@ public class CalendarEventManager {
      */
     public static void onPermissionGranted() {
         if (null == mActivity || null == mCallback || null == mCalendarEvent) return;
-        if (ContextCompat.checkSelfPermission(mActivity, Manifest.permission.WRITE_CALENDAR) != PackageManager.PERMISSION_GRANTED)
+        if (mActivity.checkSelfPermission(Manifest.permission.WRITE_CALENDAR) != PackageManager.PERMISSION_GRANTED)
             return;
         int result = CalendarEventManager.addCalendarEvent(mActivity, mCalendarEvent);
         if (result == 0) {
