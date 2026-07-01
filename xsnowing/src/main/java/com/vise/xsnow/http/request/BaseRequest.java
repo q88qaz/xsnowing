@@ -254,6 +254,8 @@ public abstract class BaseRequest<R extends BaseRequest> {
             newBuilder.readTimeout(connectTimeOut, TimeUnit.SECONDS);
         }
 
+        newBuilder.retryOnConnectionFailure(httpGlobalConfig.isRetryOnConnectionFailure());
+
         if (isHttpCache) {
             try {
                 if (httpGlobalConfig.getHttpCache() == null) {

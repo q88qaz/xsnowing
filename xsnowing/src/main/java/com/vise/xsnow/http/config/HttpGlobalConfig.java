@@ -42,6 +42,7 @@ public class HttpGlobalConfig {
     private File httpCacheDirectory;//Http缓存路径
     private Cache httpCache;//Http缓存对象
     private boolean isCookie;//是否使用Cookie
+    private boolean isRetryOnConnectionFailure;//连接失败后是否自动重试
     private ApiCookie apiCookie;//Cookie配置
     private String baseUrl;//基础域名
     private int retryDelayMillis;//请求失败重试间隔时间
@@ -152,6 +153,11 @@ public class HttpGlobalConfig {
         if (globalParams != null) {
             this.globalParams = globalParams;
         }
+        return this;
+    }
+
+    public HttpGlobalConfig retryOnConnectionFailure(boolean b) {
+        this.isRetryOnConnectionFailure = b;
         return this;
     }
 
@@ -447,6 +453,10 @@ public class HttpGlobalConfig {
 
     public Map<String, String> getGlobalHeaders() {
         return globalHeaders;
+    }
+
+    public boolean isRetryOnConnectionFailure() {
+        return isRetryOnConnectionFailure;
     }
 
     public boolean isHttpCache() {
