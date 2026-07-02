@@ -4,13 +4,15 @@ buildscript {
     repositories {
         maven { url "https://jitpack.io" }
         mavenLocal()
-        maven {
-            url "https://maven.aliyun.com/repository/public"
-        }
+        google()
+        jcenter()
+//        maven {
+//            url "https://maven.aliyun.com/repository/public"
+//        }
 
-        maven {
-            url "https://maven.aliyun.com/repository/google"
-        }
+//        maven {
+//            url "https://maven.aliyun.com/repository/google"
+//        }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:4.0.1'
@@ -23,14 +25,15 @@ allprojects {
         maven { url "https://jitpack.io" }
         mavenCentral()
         mavenLocal()
-
-        maven {
-            url "https://maven.aliyun.com/repository/public"
-        }
-
-        maven {
-            url "https://maven.aliyun.com/repository/google"
-        }
+        google()
+        jcenter()
+//        maven {
+//            url "https://maven.aliyun.com/repository/public"
+//        }
+//
+//        maven {
+//            url "https://maven.aliyun.com/repository/google"
+//        }
 
 
     }
